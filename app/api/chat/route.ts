@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { streamText } from "ai"; // This should be the right streaming helper
 
-export const runtime = "edge"; // Edge runtime is ideal for this
+export const runtime = 'nodejs';
+ // Edge runtime is ideal for this
 
 // Replace process.env with the hardcoded API key
 const apiKey = "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"; // WARNING: Hardcoding API keys is insecure!
