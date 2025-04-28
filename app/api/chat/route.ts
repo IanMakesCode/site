@@ -4,18 +4,18 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
+const apiKey = process.env.OPENAI_API_KEY; // Move this outside function for slight optimization
+
+if (!apiKey) {
+  throw new Error("Missing OpenAI API key. Make sure it is set at build time.");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, model } = await req.json();
 
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      return new Response("Missing OpenAI API key.", { status: 500 });
-    }
-
     const result = await streamText({
-      model: openai(model, { apiKey }),
+      model: openai(model || "gpt-4-turbo", { apiKey }), // fallback default
       system: "You are NeuroGPT, a helpful AI assistant.",
       messages,
     });
