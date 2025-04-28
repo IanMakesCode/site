@@ -4,15 +4,16 @@ import { streamText } from "ai"; // This should be the right streaming helper
 
 export const runtime = "edge"; // Edge runtime is ideal for this
 
-const apiKey = process.env.OPENAI_API_KEY; // Optimized placement outside the function
+// Replace process.env with the hardcoded API key
+const apiKey = "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"; // WARNING: Hardcoding API keys is insecure!
 
 if (!apiKey) {
-  throw new Error("Missing OpenAI API key. Make sure it is set at build time.");
+  throw new Error("Missing OpenAI API key. Please provide a valid API key.");
 }
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey, // Using the API key loaded from the environment variable
+  apiKey, // Using the hardcoded API key
 });
 
 export async function POST(req: NextRequest) {
@@ -33,4 +34,3 @@ export async function POST(req: NextRequest) {
     return new Response("Internal Server Error", { status: 500 }); // Return 500 error on failure
   }
 }
-
