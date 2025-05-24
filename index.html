@@ -1,45 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="/manifest.json" />
-    <!--
-      Notice the use of  in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IanGPT</title>
 
-      Unlike "/favicon.ico" or "favicon.ico", "/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <div id="modal-root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="IanGPT">
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/000000/FFFFFF?text=IG">
+    <link rel="icon" href="https://placehold.co/192x192/000000/FFFFFF?text=IG">
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+    <style>
+        /* Custom CSS for IanGPT */
+
+        /* Apply Inter font family globally */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar for chat messages */
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Auto-expanding textarea */
+        textarea {
+            min-height: 48px; /* Equivalent to h-12 in Tailwind */
+            max-height: 200px; /* Limit height to prevent excessive expansion */
+            overflow-y: auto; /* Enable scrolling if content exceeds max-height */
+        }
+
+        /* Loading spinner animation */
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .max-w-3xl {
+                max-width: 100%; /* Full width on smaller screens */
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .p-4 {
+                padding: 1rem; /* Adjust padding */
+            }
+
+            .text-2xl {
+                font-size: 1.75rem; /* Slightly smaller header */
+            }
+
+            #user-input {
+                font-size: 0.95rem; /* Slightly smaller text in input */
+            }
+
+            #send-button {
+                padding: 0.75rem 1rem; /* Adjust button padding */
+            }
+        }
+
+        /* Basic Markdown styling within chat bubbles */
+        .message-bubble p {
+            margin-bottom: 0.5em;
+        }
+        .message-bubble ul, .message-bubble ol {
+            margin-left: 1.5em;
+            list-style-type: disc;
+        }
+        .message-bubble ol {
+            list-style-type: decimal;
+        }
+        .message-bubble strong {
+            font-weight: bold;
+        }
+        .message-bubble em {
+            font-style: italic;
+        }
+        .message-bubble pre {
+            background-color: #e2e8f0; /* Tailwind gray-200 */
+            padding: 0.75em;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Menlo', 'Consolas', 'monospace';
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .message-bubble code {
+            background-color: #e2e8f0; /* Tailwind gray-200 */
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-family: 'Menlo', 'Consolas', 'monospace';
+            font-size: 0.875rem; /* text-sm */
+        }
+        .message-bubble a {
+            color: #3b82f6; /* Tailwind blue-500 */
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-inter antialiased flex flex-col h-screen">
+
+    <header class="bg-white shadow-sm p-4 flex items-center justify-center sticky top-0 z-10">
+        <h1 class="text-2xl font-bold text-gray-800">IanGPT</h1>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 flex flex-col space-y-4 max-w-3xl mx-auto w-full">
+        <div id="chat-messages" class="flex flex-col space-y-4 pb-20">
+            <div class="flex justify-start">
+                <div class="bg-blue-500 text-white p-3 rounded-lg shadow-md max-w-xs md:max-w-md break-words message-bubble">
+                    Hello! I'm IanGPT, your AI assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="bg-white p-4 shadow-lg sticky bottom-0 w-full flex justify-center">
+        <div class="flex items-center w-full max-w-3xl space-x-3">
+            <textarea
+                id="user-input"
+                class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-12 overflow-hidden text-gray-800"
+                placeholder="Type your message here..."
+                rows="1"
+                oninput="autoExpand(this)"
+            ></textarea>
+            <button
+                id="send-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+            >
+                Send
+            </button>
+        </div>
+    </div>
+
+    <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+            <p id="message-box-text" class="text-gray-700 text-lg font-medium">Loading...</p>
+            <button id="message-box-close" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg hidden">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Combined script.js and api.js content
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const chatMessages = document.getElementById('chat-messages');
+            const messageBox = document.getElementById('message-box');
+            const messageBoxText = document.getElementById('message-box-text');
+            const messageBoxCloseButton = document.getElementById('message-box-close');
+
+            // Array to store chat history (for context in API calls)
+            let chatHistory = [];
+
+            // Define the AI model configuration as provided by the user
+            // Note: This JSON structure is adapted for the Gemini API call.
+            // The 'model' and 'input' fields are used as conceptual guides.
+            const IAN_GPT_CONFIG = {
+                "model": "gpt-4.1-nano", // User's specified model name (conceptual)
+                "input": [], // Placeholder, actual chat history will be passed dynamically
+                "text": {
+                    "format": {
+                        "type": "text"
+                    }
+                },
+                "reasoning": {}, // Placeholder
+                "tools": [], // Placeholder
+                "temperature": 1,
+                "max_output_tokens": 2048,
+                "top_p": 1,
+                "store": true // Placeholder for potential future storage
+            };
+
+            // Function to show the message box with a custom message
+            function showMessageBox(message, showCloseButton = false) {
+                messageBoxText.textContent = message;
+                messageBoxCloseButton.classList.toggle('hidden', !showCloseButton);
+                messageBox.classList.remove('hidden');
+            }
+
+            // Function to hide the message box
+            function hideMessageBox() {
+                messageBox.classList.add('hidden');
+            }
+
+            // Event listener for the close button in the message box
+            messageBoxCloseButton.addEventListener('click', hideMessageBox);
+
+            // Function to append a message to the chat display
+            function appendMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('flex', sender === 'user' ? 'justify-end' : 'justify-start');
+
+                const messageBubble = document.createElement('div');
+                messageBubble.classList.add(
+                    'p-3',
+                    'rounded-lg',
+                    'shadow-md',
+                    'max-w-xs',
+                    'md:max-w-md',
+                    'break-words', // Ensures long words wrap
+                    'message-bubble' // Custom class for Markdown styling
+                );
+
+                if (sender === 'user') {
+                    messageBubble.classList.add('bg-blue-600', 'text-white');
+                    messageBubble.textContent = text; // User input is plain text
+                } else {
+                    messageBubble.classList.add('bg-gray-200', 'text-gray-800');
+                    // Use marked.js to parse Markdown from AI response
+                    messageBubble.innerHTML = marked.parse(text);
+                }
+
+                messageDiv.appendChild(messageBubble);
+                chatMessages.appendChild(messageDiv);
+
+                // Scroll to the bottom of the chat
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            /**
+             * Calls the AI model (simulating OpenAI API with Gemini 2.0 Flash).
+             * @param {Array<Object>} chatHistory - An array of message objects,
+             * e.g., [{ role: 'user', parts: [{ text: 'Hello' }] }, ...]
+             * @returns {Promise<string>} A promise that resolves with the AI's response text.
+             */
+            async function callIanGPTAPI(chatHistory) {
+                // The API key is automatically provided by the Canvas environment if left empty.
+                // The user's provided key is not directly used here as this calls Google's Gemini API.
+                const apiKey = "";
+                // The API endpoint for Gemini 2.0 Flash
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                // Construct the payload for the Gemini API
+                const payload = {
+                    contents: chatHistory, // Use the provided chat history for context
+                    generationConfig: {
+                        temperature: IAN_GPT_CONFIG.temperature,
+                        maxOutputTokens: IAN_GPT_CONFIG.max_output_tokens,
+                        topP: IAN_GPT_CONFIG.top_p,
+                        // Add other generation config parameters if needed
+                    },
+                    // Safety settings can be added here if desired
+                    // safetySettings: [
+                    //     {
+                    //         category: "HARM_CATEGORY_HARASSMENT",
+                    //         threshold: "BLOCK_MEDIUM_AND_ABOVE",
+                    //     },
+                    // ],
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('API Error Response:', errorData);
+                        throw new Error(`API request failed with status ${response.status}: ${errorData.error.message || 'Unknown error'}`);
+                    }
+
+                    const result = await response.json();
+
+                    // Extract the text from the API response
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        console.warn('Unexpected API response structure:', result);
+                        return "I'm sorry, I couldn't generate a response. The AI provided an empty or malformed response.";
+                    }
+                } catch (error) {
+                    console.error('Error during API call:', error);
+                    throw error; // Re-throw to be caught by the calling function
+                }
+            }
+
+            // Function to handle sending a message
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') {
+                    return; // Don't send empty messages
+                }
+
+                // Add user message to chat history and display
+                chatHistory.push({ role: 'user', parts: [{ text: message }] });
+                appendMessage('user', message);
+                userInput.value = ''; // Clear input field
+                autoExpand(userInput); // Reset textarea height
+
+                // Show loading indicator
+                showMessageBox('IanGPT is thinking...');
+
+                try {
+                    // Call the API function
+                    const aiResponse = await callIanGPTAPI(chatHistory);
+
+                    // Add AI response to chat history and display
+                    chatHistory.push({ role: 'model', parts: [{ text: aiResponse }] });
+                    appendMessage('ai', aiResponse);
+
+                } catch (error) {
+                    console.error('Error calling IanGPT API:', error);
+                    showMessageBox('Oops! Something went wrong. Please try again.', true);
+                } finally {
+                    // Hide loading indicator
+                    hideMessageBox();
+                }
+            }
+
+            // Event listener for send button click
+            sendButton.addEventListener('click', sendMessage);
+
+            // Event listener for Enter key in the input field
+            userInput.addEventListener('keypress', (event) => {
+                // Check if Enter key is pressed without Shift (for new line)
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent new line in textarea
+                    sendMessage();
+                }
+            });
+
+            // Function to auto-expand textarea height
+            window.autoExpand = function(textarea) {
+                textarea.style.height = 'auto'; // Reset height
+                textarea.style.height = (textarea.scrollHeight) + 'px'; // Set to scroll height
+                // Limit max height to prevent excessive expansion
+                if (textarea.scrollHeight > 200) {
+                    textarea.style.height = '200px';
+                    textarea.style.overflowY = 'auto';
+                } else {
+                    textarea.style.overflowY = 'hidden';
+                }
+            };
+
+            // Initial call to autoExpand to set correct height on load if there's pre-filled text
+            autoExpand(userInput);
+        });
+    </script>
+</body>
 </html>
